@@ -2,11 +2,11 @@ use color_eyre::Result;
 use crossterm::event::{self, KeyCode};
 use ratatui::layout::{Constraint, Layout, Position};
 use ratatui::symbols::border;
-use ratatui::widgets::{Block, List, ListItem, Paragraph};
+use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Borders};
 use ratatui::{DefaultTerminal, Frame};
 
-use ratatui::layout::Direction;
 use ratatui::border;
+use ratatui::layout::Direction;
 
 use ratatui::text::{Line, Text};
 
@@ -30,7 +30,7 @@ struct App {
     /// Current value of the input box
     input_mode: InputMode,
     /// Initialize Editor
-    buffer: IDEBuffer
+    buffer: IDEBuffer,
 }
 
 impl App {
@@ -80,19 +80,24 @@ impl App {
     fn render(&self, frame: &mut Frame) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Min(1),
-                Constraint::Length(2),
-            ])
-            .split(frame.area());   
+            .constraints([Constraint::Min(1), Constraint::Length(3)])
+            .split(frame.area());
 
-        let text = Text::from(&self.buffer.strokes_array[..]);
-        
+        // Каждую строку вектора оборачиваем в ListItem
+        let items: Vec<ListItem> = self.buffer.strokes_array
+            .iter()
+            .map(|line| ListItem::new(line.as_str()))
+            .collect();
+
+        let list_widget = List::new(items)
+            .block(Block::default().borders(Borders::ALL).title(" Editor "));
+
         let b = Block::default()
-        .title(self.status_line_name(&self.input_mode))
-        .borders(border!(BOTTOM));
+            .title(self.status_line_name(&self.input_mode))
+            .borders(Borders::ALL);
 
-        frame.render_widget(text, chunks[0]);
-        frame.render_widget(b, chunks[1]);
+        // Рендерим строго по своим местам!
+        frame.render_widget(list_widget, chunks[0]); // Код — в chunks[0]
+        frame.render_widget(b, chunks[1]);          // Статус — в chunks[1]
     }
 }
