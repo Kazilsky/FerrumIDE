@@ -1,50 +1,50 @@
 use color_eyre::Result;
-use ratatui::{DefaultTerminal};
+use crossterm::event;
+use crossterm::event::Event;
 
-// Import Own Files
-mod modules;
+use ratatui::DefaultTerminal;
 
-use modules::buffer::Buffer as IDEBuffer;
-use modules::view::View;
-use modules::ui::UI;
-
-
+// Import manager orchestrator
+mod manager;
+use manager::Manager;
 
 fn main() -> Result<()> {
     color_eyre::install()?;
-    let app = App::new();
+    let mut app = App::new();
 
-    ratatui::run(
-        |terminal| 
-        app.run(terminal)
-    )
+    ratatui::run(|terminal| app.run(terminal))
 }
 
 /// App holds the state of the application
 struct App {
-    /// Initialize Editor
-    buffer: IDEBuffer,
-    /// Initialize UI
-    ui: UI,
-    /// 
-    view: View
+    /// Initialize Manager
+    /// Manager holds a much param for App, like cursor, buffer
+    /// [`Buffer`, 'Cursor']
+    manager: Manager,
 }
 
 impl App {
     fn new() -> Self {
         Self {
-            buffer: IDEBuffer::new(),
-            ui: UI::new(),
-            view: View::new()
+            manager: Manager::new(),
         }
     }
 
-    fn run(&self, terminal: &mut DefaultTerminal) -> Result<()> {
+    fn run(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
         loop {
-            terminal.draw(
-                |frame| 
-                self.ui.render(frame)
-            )?;   
+            terminal.draw(|frame| self.manager.render_ui(frame))?;
+
+            if let Event::Key(key_event) = event::read()? {
+                let keep_running = self.manager.handle_key(key_event.code);
+
+                // If handle_key return false — exit from for
+                if !keep_running {
+                    break; // Break app
+                }
+            }
         }
+
+        ratatui::restore();
+        Ok(())
     }
 }
