@@ -7,7 +7,6 @@ macro_rules! test_macros {
 }
 
 #[macro_export]
-
 macro_rules! dispatch_input {
     ($self:ident, $key:expr, {
         $( Normal => $n_intent:ident => $n_action:block )*

@@ -6,6 +6,7 @@ use ratatui::DefaultTerminal;
 
 // Import manager orchestrator
 mod manager;
+
 use manager::Manager;
 
 fn main() -> Result<()> {

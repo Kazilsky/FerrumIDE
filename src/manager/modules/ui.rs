@@ -11,15 +11,11 @@ enum InputMode {
     Editing,
 }
 
-pub struct UI {
-    input_mode: InputMode,
-}
+pub struct UI { }
 
 impl UI {
     pub fn new() -> Self {
-        Self {
-            input_mode: InputMode::Normal,
-        }
+        Self { }
     }
 
     fn status_line_name(&self, mode: &InputMode) -> String {
