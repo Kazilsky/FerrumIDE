@@ -47,7 +47,7 @@ impl Manager {
         }
     }
 
-    pub fn render_ui(&mut self, frame: &mut Frame) {
+    pub fn prelude(&mut self) {
         // It's a main loop function for render, so I do here a many staff like read args
         self.file.set_dir(args::parse_path());
         self.file.read_dir();
@@ -55,7 +55,9 @@ impl Manager {
 
         self.buffer.strokes_array.remove(0);
         self.buffer.strokes_array.append(&mut self.file.strokes_present_files);
+    }
 
+    pub fn render_ui(&mut self, frame: &mut Frame) {
         self.ui.render(
             // Base settings
             frame,

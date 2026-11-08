@@ -32,6 +32,8 @@ impl App {
     }
 
     fn run(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
+        self.manager.prelude();
+        
         loop {
             terminal.draw(|frame| self.manager.render_ui(frame))?;
 
