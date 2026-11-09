@@ -6,22 +6,22 @@ use ratatui::widgets::{Block, Borders, Paragraph};
 
 use ratatui::text::Line;
 
-enum InputMode {
-    Normal,
-    Editing,
-}
+pub struct UI {}
 
-pub struct UI { }
+pub enum InputMode {
+    Normal,
+    Insert,
+}
 
 impl UI {
     pub fn new() -> Self {
-        Self { }
+        Self {}
     }
 
     fn status_line_name(&self, mode: &InputMode) -> String {
         match mode {
-            InputMode::Editing => "test".to_string(),
-            InputMode::Normal => "asd".to_string(),
+            InputMode::Insert => "Insert".to_string(),
+            InputMode::Normal => "Normal".to_string(),
         }
     }
 
