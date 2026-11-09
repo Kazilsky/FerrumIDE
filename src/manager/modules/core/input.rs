@@ -31,6 +31,8 @@ pub enum EditIntent {
     Enter,
     Left,
     Right,
+    Up,
+    Down,
     Escape,
     None,
 }
@@ -48,6 +50,8 @@ pub fn parse_editing_key(key: KeyCode) -> EditIntent {
         KeyCode::Enter => EditIntent::Enter,
         KeyCode::Left => EditIntent::Left,
         KeyCode::Right => EditIntent::Right,
+        KeyCode::Down => EditIntent::Down,
+        KeyCode::Up => EditIntent::Up,
         KeyCode::Esc => EditIntent::Escape,
         _ => EditIntent::None,
     }

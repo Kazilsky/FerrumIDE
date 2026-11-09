@@ -31,7 +31,6 @@ impl FileSystem {
             let dir = entry?;
 
             self.files.push(dir.path().to_string_lossy().into_owned()); // I hate relocate PathBuf -> String, it's be a little hardly for me.
-            // println!("{:?}", dir.path())
         }
         Ok(())
     }
@@ -42,7 +41,6 @@ impl FileSystem {
 
         for line in f.lines() {
             let line = line?;
-            // println!("{line}")
             self.strokes_present_files.push(line);
         }
 

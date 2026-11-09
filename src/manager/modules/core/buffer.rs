@@ -1,8 +1,17 @@
+use std::println;
+
+use crossterm::event::KeyCode;
+
 pub struct Buffer {
     /// History of recorded messages
     pub strokes_array: Vec<String>,
     /// Number a present stroke
     pub present_stroke: usize,
+}
+
+pub enum Direction {
+    Up,
+    Down
 }
 
 impl Buffer {
@@ -14,7 +23,10 @@ impl Buffer {
     }
 
     pub fn enter_char(&mut self, char_index: usize, new_char: char) {
-        self.strokes_array[self.present_stroke].insert(char_index, new_char);
+        let byte_index = self.byte_index(char_index);
+
+        // Safely insert the character using the converted byte index
+        self.strokes_array[self.present_stroke].insert(byte_index, new_char);
     }
 
     pub fn delete_char(&mut self, current_index: usize) {
@@ -40,12 +52,36 @@ impl Buffer {
             before_char_to_delete.chain(after_char_to_delete).collect();
     }
 
-    pub fn line_break(&mut self, split_param: usize) {
-        let new_line_slice = self.strokes_array[self.present_stroke].split_off(split_param);
-        self.strokes_array
-            .insert(self.present_stroke + 1, new_line_slice);
+    pub fn line_break(&mut self, char_index: usize, type_break: KeyCode) -> usize {
+        match type_break {
+            KeyCode::Enter => {
+                let byte_symbol = self.byte_index(char_index);
 
-        self.present_stroke += 1;
+                let new_line_slice = self.strokes_array[self.present_stroke]
+                    .split_off(byte_symbol);
+                self.strokes_array
+                    .insert(self.present_stroke + 1, new_line_slice);
+
+                self.present_stroke += 1;
+            }
+            KeyCode::Backspace => {
+                let current_line = self.strokes_array.remove(self.present_stroke);
+                self.present_stroke -= 1;
+                let len_current_line = self.strokes_array[self.present_stroke].chars().count();
+                self.strokes_array[self.present_stroke].push_str(&current_line);
+                
+                return len_current_line // I return len for cursor in manager
+            }
+            _ => {} // Very mutch KeyCode here be, yes, but it's not needable
+        }    
+        return 0 
+    }
+
+    pub fn swap_current_stroke(&mut self, direction: Direction) {
+        match direction {
+            Direction::Up   => if self.present_stroke > 0                  {self.present_stroke -= 1}
+            Direction::Down => if self.present_stroke < self.max_strokes() {self.present_stroke += 1}
+        }
     }
 
     pub fn max_strokes(&self) -> usize {
@@ -60,7 +96,12 @@ impl Buffer {
     ///
     /// Since each character in a string can contain multiple bytes, it's necessary to calculate
     /// the byte index based on the index of the character.
-    pub fn byte_index(&self) -> usize {
-        self.strokes_array[self.present_stroke].len()
+    pub fn byte_index(&mut self, char_index: usize) -> usize {
+        self.strokes_array[self.present_stroke]
+            .char_indices()
+            .map(|(b_idx, _)| b_idx)
+            .nth(char_index)
+            // If the index isn't found, check if they are appending to the very end
+            .unwrap_or_else(|| self.strokes_array[self.present_stroke].len())
     }
 }

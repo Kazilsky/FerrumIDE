@@ -13,6 +13,9 @@ use modules::file::FileSystem;
 use modules::input::{parse_editing_key, parse_normal_key};
 use modules::cli::args;
 
+// Import enum from modules
+use modules::buffer::Direction;
+
 use crate::dispatch_input;
 use crate::manager::modules::input::EditIntent;
 use crate::manager::modules::input::NormalIntent;
@@ -78,24 +81,38 @@ impl Manager {
 
             Insert => Char(c)        => {
                 self.buffer.enter_char(self.cursor.character_index, c);
-                self.cursor.move_right();
+                self.cursor.move_right(self.buffer.strokes_array[self.buffer.present_stroke].len());
             }
             Insert => Backspace      => {
                 if self.cursor.character_index > 0 {
                     self.buffer.delete_char(self.cursor.character_index);
                     self.cursor.move_left();
                 } else {
-                    self.buffer.present_stroke -= 1;
-                    self.cursor.set_x(self.buffer.byte_index());
+                    // On this I use set cursor on line_break function
+                    // It' okay because line_break return unsigned integer for x coordinates on cursor
+                    // I also do it on enter (but with zero)
+
+                    self.cursor.set_x(
+                        self.buffer.line_break(self.cursor.character_index, KeyCode::Backspace)
+                    )
                 }
             }
             Insert => Enter          => {
-                self.buffer.line_break(self.cursor.character_index);
-                self.cursor.set_x(0);
+                // self.buffer.line_break(self.cursor.character_index, KeyCode::Enter);
+                // self.cursor.set_x(0);
+                // I use it before but now I have mobile function
+
+                self.cursor.set_x(
+                    // But on this I have a problem, because I need use byte, not chars or something
+                    // INFO: I try fix character_index for read byte on index
+                    self.buffer.line_break(self.cursor.character_index, KeyCode::Enter)
+                );
             }
-            Insert => Left           => { self.cursor.move_left(); }
-            Insert => Right          => { self.cursor.move_right(); }
-            Insert => Escape         => { self.input_mode = InputMode::Normal; }
+            Insert => Left           => { self.cursor.move_left() }
+            Insert => Right          => { self.cursor.move_right(self.buffer.strokes_array[self.buffer.present_stroke].len()) }
+            Insert => Up             => { self.buffer.swap_current_stroke(Direction::Up) }
+            Insert => Down           => { self.buffer.swap_current_stroke(Direction::Down) }
+            Insert => Escape         => { self.input_mode = InputMode::Normal }
             Insert => None           => {}
         });
 
