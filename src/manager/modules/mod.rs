@@ -3,4 +3,4 @@ pub mod ui;
 
 mod core;
 
-pub use core::{buffer, cursor, file, input};
+pub use core::context::{self, input, InputMode};

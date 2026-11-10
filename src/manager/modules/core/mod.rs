@@ -1,4 +1,2 @@
-pub mod buffer;
-pub mod cursor;
-pub mod file;
-pub mod input;
+pub mod command;
+pub mod context;

@@ -67,10 +67,10 @@ impl Buffer {
             KeyCode::Backspace => {
                 let current_line = self.strokes_array.remove(self.present_stroke);
                 self.present_stroke -= 1;
-                let len_current_line = self.strokes_array[self.present_stroke].chars().count();
+                let chars_len_current_line = self.strokes_array[self.present_stroke].chars().count();
                 self.strokes_array[self.present_stroke].push_str(&current_line);
                 
-                return len_current_line // I return len for cursor in manager
+                return chars_len_current_line // I return len for cursor in manager
             }
             _ => {} // Very mutch KeyCode here be, yes, but it's not needable
         }    
