@@ -72,7 +72,7 @@ impl Buffer {
                 
                 return chars_len_current_line // I return len for cursor in manager
             }
-            _ => {} // Very mutch KeyCode here be, yes, but it's not needable
+            _ => {} // Very match KeyCode here be, yes, but it's not needable
         }    
         return 0 
     }
@@ -85,8 +85,10 @@ impl Buffer {
     }
 
     pub fn max_strokes(&self) -> usize {
-        let response = self.strokes_array.len() - 1;
+        // It's needable for system, not for GUI
         // because it return one, not zero (like [0])
+        let response = self.strokes_array.len() - 1;
+        // So I rewrite for [0]
         response as usize
     }
 
@@ -104,4 +106,6 @@ impl Buffer {
             // If the index isn't found, check if they are appending to the very end
             .unwrap_or_else(|| self.strokes_array[self.present_stroke].len())
     }
+    // This function do me mad. I already once broke my stroke logic
+    // By the way I fix this and byte_index already work
 }

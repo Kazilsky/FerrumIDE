@@ -26,7 +26,19 @@ impl CommandRegistry {
         }
     }
 
-    // Выносим твои базовые действия из handle_key сюда!
+    pub fn get(&self, name: &str) -> Option<CommandFn> {
+        self.commands.get(name).copied()
+    }
+
+    // This is a core-level command—an essential function.
+    // It was designed to avoid placing the entire burden of responsibility on the manager
+    // While also providing direct access to functionality from within plugins.
+
+    // This is crucial for plugin development: it allows a plugin to easily manage context and invoke key system commands directly
+    // Without forcing the use of monolithic, "god-like" structures.
+
+    // This is important because my brain is rarely capable of handling logic any more complex than...
+    // Well, just "complex logic"—that covers it.
     fn register_core_commands(&mut self) {
         self.register("mode.insert", |ctx| ctx.input_mode = InputMode::Insert);
         self.register("mode.normal", |ctx| ctx.input_mode = InputMode::Normal);

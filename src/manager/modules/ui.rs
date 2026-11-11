@@ -51,7 +51,6 @@ impl UI {
         let line_widget =
             Paragraph::new(lines).block(Block::default().borders(Borders::ALL).title(" Editor "));
 
-        // Рендерим строго по своим местам!
         frame.render_widget(line_widget, chunks_vertical[0]); // Код — в chunks[0]
         frame.set_cursor_position(Position::new(
             chunks_vertical[0].x + char_index + 1,
