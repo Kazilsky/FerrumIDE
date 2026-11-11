@@ -26,6 +26,10 @@ impl CommandRegistry {
         }
     }
 
+    pub fn get(&self, name: &str) -> Option<CommandFn> {
+        self.commands.get(name).copied()
+    }
+
     // Выносим твои базовые действия из handle_key сюда!
     fn register_core_commands(&mut self) {
         self.register("mode.insert", |ctx| ctx.input_mode = InputMode::Insert);

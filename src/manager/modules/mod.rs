@@ -4,3 +4,4 @@ pub mod ui;
 mod core;
 
 pub use core::context::{self, input, InputMode};
+pub use core::plugins;

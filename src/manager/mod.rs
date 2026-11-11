@@ -17,11 +17,15 @@ use crate::manager::modules::input::EditIntent;
 use crate::manager::modules::input::NormalIntent;
 use crate::manager::modules::input::AllIntent;
 
+use crate::manager::modules::plugins::PluginManager;
+
 pub struct Manager {
     /// Initialize UI
     pub ui: UI,
     // Initialize Context 
-    pub context: Context
+    pub context: Context,
+    // Initialize PluginManager
+    pub pm: PluginManager
     
 }
 
@@ -30,6 +34,7 @@ impl Manager {
         Self {
             ui: UI::new(),
             context: Context::new(),
+            pm: PluginManager::new(),
             // cursor: Cursor::new(),
             // file: FileSystem::new(),
             // input_mode: InputMode::Normal,
@@ -60,6 +65,7 @@ impl Manager {
     }
 
     pub fn handle_key(&mut self, keycode: KeyCode) -> bool {
+    if !self.pm.handle_key(keycode) {
         dispatch_input!(self, keycode, {
             Normal => SwitchToEdit   => { self.context.input_mode = InputMode::Insert; }
             Normal => Quit           => { return false; }
@@ -106,5 +112,7 @@ impl Manager {
         });
 
         true
-    }
+    } else { false }
+}
+
 }
