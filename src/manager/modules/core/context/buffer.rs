@@ -29,7 +29,7 @@ impl Buffer {
         self.strokes_array[self.present_stroke].insert(byte_index, new_char);
     }
 
-    pub fn delete_char(&mut self, current_index: usize) {
+    pub fn delete_char(&mut self, current_index: usize, echo: bool ) {
         // let is_not_cursor_leftmost = view.character_index != 0;
         // if is_not_cursor_leftmost {
         // Method "remove" is not used on the saved text for deleting the selected char.
@@ -93,6 +93,24 @@ impl Buffer {
     }
 
     /// MODULE PART
+    pub fn check_delete_char(&self, char_index: usize) -> bool {
+        // A most like I just stole from delete_char
+        let from_left_to_current_index = char_index - 1;
+
+        // Getting all characters before the selected character.
+        let char_to_delete: Vec<char>    = self.strokes_array[self.present_stroke].chars().collect();
+
+        for i in 0..char_to_delete.len() {
+            if i > 0 && (char_to_delete[ i - 1 ] == '(' || char_to_delete[ i - 1 ] == '[') {
+                return true
+            }
+        }
+
+        return false
+    }    
+
+
+    /// JUST DON'T WRITE DOWNER! IT'S NOT NEEDABLE!
 
     /// Returns the byte index based on the character position.
     ///

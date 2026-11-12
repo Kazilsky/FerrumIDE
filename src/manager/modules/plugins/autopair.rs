@@ -29,6 +29,7 @@ impl Plugin for AutoPairPlugin {
             return false;
         }
 
+        // On this I checked press close_char
         if let KeyCode::Char(open_char) = key {
             let close_char = match open_char {
                 '(' => Some(')'),
@@ -49,6 +50,17 @@ impl Plugin for AutoPairPlugin {
 
                 return true;
             }
+        }
+
+        // On this I check delete close_char for delete a next symbol too
+        if let KeyCode::Backspace = key {
+            if let Some(close) = close_char {
+                let idx = ctx.cursor.character_index;
+
+                
+            }
+            
+            return true;
         }
 
         false
