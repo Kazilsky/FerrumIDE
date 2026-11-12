@@ -7,8 +7,6 @@ use buffer::Buffer as IDEBuffer;
 use cursor::Cursor;
 use file::FileSystem;
 
-pub use buffer::Direction;
-
 #[derive(PartialEq, Clone, Copy)]
 pub enum InputMode {
     Normal,

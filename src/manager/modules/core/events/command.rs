@@ -1,6 +1,7 @@
 use std::collections::HashMap;
-use super::context::{Context, InputMode};
-use super::context::buffer::Direction;
+
+use crate::manager::modules::context::{Context, InputMode};
+use crate::manager::modules::context::buffer::Direction;
 
 // Command - this is just a normal function in Rust, command can change context
 pub type CommandFn = fn(&mut Context);
@@ -44,6 +45,7 @@ impl CommandRegistry {
         self.register("mode.normal", |ctx| ctx.input_mode = InputMode::Normal);
         self.register("app.quit",    |ctx| ctx.should_quit = true);
         
+        self.register("cursor.visible", |ctx| ctx.cursor.visible_toggle());
         self.register("cursor.left", |ctx| ctx.cursor.move_left());
         self.register("cursor.right", |ctx| {
             let len = ctx.buffer.strokes_array[ctx.buffer.present_stroke].len();
@@ -52,5 +54,8 @@ impl CommandRegistry {
         
         self.register("buffer.swap_up", |ctx| ctx.buffer.swap_current_stroke(Direction::Up));
         self.register("buffer.swap_down", |ctx| ctx.buffer.swap_current_stroke(Direction::Down));
+    
+        
+        // self.register("stroke.remov", |ctx| ctx.buffer.delete_char(ctx.cursor.character_index + 1));
     }
 }

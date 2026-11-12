@@ -29,7 +29,7 @@ impl Buffer {
         self.strokes_array[self.present_stroke].insert(byte_index, new_char);
     }
 
-    pub fn delete_char(&mut self, current_index: usize, echo: bool ) {
+    pub fn delete_char(&mut self, current_index: usize) {
         // let is_not_cursor_leftmost = view.character_index != 0;
         // if is_not_cursor_leftmost {
         // Method "remove" is not used on the saved text for deleting the selected char.
@@ -92,25 +92,34 @@ impl Buffer {
         response as usize
     }
 
-    /// MODULE PART
-    pub fn check_delete_char(&self, char_index: usize) -> bool {
-        // A most like I just stole from delete_char
-        let from_left_to_current_index = char_index - 1;
-
+    /// !!!MODULE PART!!!
+    
+    /// This function is one of the few that warrants the "Some" approach
+    /// Given that Rust acknowledges that a return value isn't always guaranteed—which
+    /// From a coding perspective, is the correct way to handle things.
+    /// 
+    /// This function is necessary for scenarios where a plugin or system needs to take into account preceding characters
+    /// As it allows for specifying coordinates relative to the cursor.
+    /// 
+    /// read_char(&self.buffer.character_index) <- like this
+    /// But in future I try put in like commands
+    pub fn read_char(&self, char_index: usize) -> Option<char> {
         // Getting all characters before the selected character.
-        let char_to_delete: Vec<char>    = self.strokes_array[self.present_stroke].chars().collect();
+        let read_stroke: Vec<char> = self.strokes_array[self.present_stroke].chars().collect();
 
-        for i in 0..char_to_delete.len() {
-            if i > 0 && (char_to_delete[ i - 1 ] == '(' || char_to_delete[ i - 1 ] == '[') {
-                return true
+        for i in 0..read_stroke.len() {
+            if i == char_index {
+                return Some(read_stroke[i]);
             }
-        }
-
-        return false
-    }    
+        }   
+        None
+        // I always forget how to work with Some. 
+    }
 
 
     /// JUST DON'T WRITE DOWNER! IT'S NOT NEEDABLE!
+    /// YOU WILL BREAK EVERYTHING AND EVERYONE
+    /// THINK ABOUT HUMANITY
 
     /// Returns the byte index based on the character position.
     ///

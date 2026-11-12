@@ -3,11 +3,12 @@ use std::cmp::max;
 
 pub struct Cursor {
     pub character_index: usize,
+    pub visible: bool
 }
 
 impl Cursor {
     pub fn new() -> Self {
-        Self { character_index: 0 }
+        Self { character_index: 0, visible: true }
     }
 
     // INFO: I use it when use buffer:enter_chat
@@ -25,5 +26,13 @@ impl Cursor {
 
     pub fn set_x(&mut self, x: usize) {
         self.character_index = x;
+    }
+
+    pub fn visible_toggle(&mut self) {
+        if self.visible {
+            self.visible = false
+        } else {
+            self.visible = true
+        }
     }
 }

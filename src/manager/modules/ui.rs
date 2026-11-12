@@ -31,6 +31,7 @@ impl UI {
         strokes_list: &Vec<String>,
         char_index: &u16,
         present_stroke: &u16,
+        cursor_visible: bool
     ) {
         // SPLIT SCREEN
         let chunks_vertical = Layout::default()
@@ -52,9 +53,11 @@ impl UI {
             Paragraph::new(lines).block(Block::default().borders(Borders::ALL).title(" Editor "));
 
         frame.render_widget(line_widget, chunks_vertical[0]); // Код — в chunks[0]
-        frame.set_cursor_position(Position::new(
-            chunks_vertical[0].x + char_index + 1,
-            chunks_vertical[0].y + present_stroke + 1,
-        ));
+        if cursor_visible {
+            frame.set_cursor_position(Position::new(
+                chunks_vertical[0].x + char_index + 1,
+                chunks_vertical[0].y + present_stroke + 1,
+            ));
+        }
     }
 }

@@ -54,15 +54,27 @@ impl Plugin for AutoPairPlugin {
 
         // On this I check delete close_char for delete a next symbol too
         if let KeyCode::Backspace = key {
-            if let Some(close) = close_char {
-                let idx = ctx.cursor.character_index;
+            let idx = ctx.cursor.character_index;
 
-                
+            if idx > 0 {
+                if let (Some(left), Some(right)) = (
+                    ctx.buffer.read_char(idx - 1),
+                    ctx.buffer.read_char(idx),
+                ) {
+                    let is_pair = matches!(
+                        (left, right),
+                        ('(', ')') | ('[', ']') | ('{', '}') | ('"', '"') | ('\'', '\'')
+                    );
+
+                    if is_pair {
+                        ctx.buffer.delete_char(idx);
+                        ctx.buffer.delete_char(idx);
+                        commands.execute("cursor.left", ctx);
+                        return true;
+                    }
+                }
             }
-            
-            return true;
         }
-
         false
     }
 }

@@ -1,12 +1,9 @@
+use std::time::Duration;
 use color_eyre::Result;
-use crossterm::event;
-use crossterm::event::Event;
-
+use crossterm::event::{self, Event, KeyEventKind};
 use ratatui::DefaultTerminal;
 
-// Import manager orchestrator
 mod manager;
-
 use manager::Manager;
 
 fn main() -> Result<()> {
@@ -16,11 +13,7 @@ fn main() -> Result<()> {
     ratatui::run(|terminal| app.run(terminal))
 }
 
-/// App holds the state of the application
 struct App {
-    /// Initialize Manager
-    /// Manager holds a much param for App, like cursor, buffer
-    /// [`Buffer`, 'Cursor']
     manager: Manager,
 }
 
@@ -37,14 +30,19 @@ impl App {
         loop {
             terminal.draw(|frame| self.manager.render_ui(frame))?;
 
-            if let Event::Key(key_event) = event::read()? {
-                let keep_running = self.manager.handle_key(key_event.code);
+            if event::poll(Duration::from_millis(50))? {
+                if let Event::Key(key_event) = event::read()? {
+                    if key_event.kind == KeyEventKind::Press {
+                        let keep_running = self.manager.handle_key(key_event.code);
 
-                // If handle_key return false — exit from for
-                if !keep_running {
-                    break; // Break app
+                        if !keep_running {
+                            break;
+                        }
+                    }
                 }
             }
+
+            self.manager.tick();
         }
 
         ratatui::restore();
