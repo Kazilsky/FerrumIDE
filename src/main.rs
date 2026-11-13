@@ -1,16 +1,30 @@
-use std::time::Duration;
 use color_eyre::Result;
-use crossterm::event::{self, Event, KeyEventKind};
-use ratatui::DefaultTerminal;
+use crossterm::{
+    cursor,
+    event::{self, Event, KeyEventKind},
+    execute,
+    terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
+};
+use std::io::{self, BufWriter, Stdout};
+use std::time::Duration;
 
 mod manager;
 use manager::Manager;
 
 fn main() -> Result<()> {
     color_eyre::install()?;
-    let mut app = App::new();
 
-    ratatui::run(|terminal| app.run(terminal))
+    terminal::enable_raw_mode()?;
+    let mut stdout = BufWriter::new(io::stdout());
+    execute!(stdout, EnterAlternateScreen, cursor::Hide)?;
+
+    let mut app = App::new();
+    let res = app.run(&mut stdout);
+
+    execute!(stdout, cursor::Show, LeaveAlternateScreen)?;
+    terminal::disable_raw_mode()?;
+
+    res
 }
 
 struct App {
@@ -24,13 +38,20 @@ impl App {
         }
     }
 
-    fn run(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
+    fn run(&mut self, stdout: &mut BufWriter<Stdout>) -> Result<()> {
         self.manager.prelude();
-        
-        loop {
-            terminal.draw(|frame| self.manager.render_ui(frame))?;
 
-            if event::poll(Duration::from_millis(50))? {
+        loop {
+            let new_ticks = self.manager.hz.update();
+            // Внутри loop в main.rs:
+
+            self.manager.tick();    
+
+            if new_ticks > 0 && self.manager.hz.total_ticks % 16 == 0 {
+                self.manager.render_ui(stdout);
+            }
+
+            if event::poll(Duration::from_millis(1))? {
                 if let Event::Key(key_event) = event::read()? {
                     if key_event.kind == KeyEventKind::Press {
                         let keep_running = self.manager.handle_key(key_event.code);
@@ -41,11 +62,8 @@ impl App {
                     }
                 }
             }
-
-            self.manager.tick();
         }
 
-        ratatui::restore();
         Ok(())
     }
 }

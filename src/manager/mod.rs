@@ -1,6 +1,5 @@
 use crossterm::event::KeyCode;
-use ratatui::Frame;
-use tokio::time::Duration;
+use std::io::{self, Write};
 
 mod modules;
 
@@ -9,7 +8,7 @@ use modules::context::{Context, InputMode};
 use modules::ui::UI;
 use modules::cli::args;
 use crate::manager::modules::command::CommandRegistry;
-use crate::manager::modules::timer::TimerManager;
+use crate::manager::modules::context::hertz::Hertz;
 
 // Import func input
 use modules::input::{parse_editing_key, parse_normal_key, parse_all_key};
@@ -26,7 +25,7 @@ pub struct Manager {
     pub context: Context,
     pub commands: CommandRegistry, 
     pub pm: PluginManager,  
-    pub timers: TimerManager       
+    pub hz: Hertz
 }
 
 impl Manager {
@@ -36,18 +35,18 @@ impl Manager {
             context: Context::new(),
             commands: CommandRegistry::new(),
             pm: PluginManager::new(), 
-            timers: TimerManager::new(),
+            hz: Hertz::new(1000),
         }
     }
 
     pub fn prelude(&mut self) {
         self.pm.load(autopair(), &mut self.commands);
 
-        self.timers.set_interval(
-            "cursor_blink",
-            Duration::from_millis(500),
-            "cursor.visible",
-        );
+        // self.timers.set_interval(
+        //     "cursor_blink",
+        //     Duration::from_millis(500),
+        //     "cursor.visible",
+        // );
 
         // I need this for test, so don't be angry, let this stay here as a temporary stopgap
         self.context.file.set_dir(args::parse_path());
@@ -60,18 +59,26 @@ impl Manager {
     }
 
     pub fn tick(&mut self) {
-        self.timers.tick(&mut self.context, &self.commands);
+        let new_ticks = self.hz.update();
+
+        for i in 0..new_ticks {
+            let current_tick = self.hz.total_ticks - new_ticks + i + 1;
+
+            if current_tick % 500 == 0 {
+                self.commands.execute("cursor.visible", &mut self.context);
+            }
+        }
     }
 
     // This is render.
     // I don't good in render so just stay it's there
-    pub fn render_ui(&mut self, frame: &mut Frame) {
+    pub fn render_ui<W: Write>(&self, w: &mut W) -> io::Result<()> {
         self.ui.render(
-            frame,
+            w,
             &self.context.buffer.strokes_array,
-            &(self.context.cursor.character_index as u16),
-            &(self.context.buffer.present_stroke as u16),
-            self.context.cursor.visible
+            self.context.cursor.character_index as u16,
+            self.context.buffer.present_stroke as u16,
+            self.context.cursor.visible,
         )
     }
 

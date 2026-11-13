@@ -1,10 +1,9 @@
-use ratatui::Frame;
-
-use ratatui::layout::{Constraint, Direction, Layout, Position};
-
-use ratatui::widgets::{Block, Borders, Paragraph};
-
-use ratatui::text::Line;
+use crossterm::{
+    cursor, queue,
+    style::Print,
+    terminal::{self, Clear, ClearType},
+};
+use std::io::{self, Write};
 
 pub struct UI {}
 
@@ -18,46 +17,70 @@ impl UI {
         Self {}
     }
 
-    fn status_line_name(&self, mode: &InputMode) -> String {
+    fn status_line_name(&self, mode: &InputMode) -> &'static str {
         match mode {
-            InputMode::Insert => "Insert".to_string(),
-            InputMode::Normal => "Normal".to_string(),
+            InputMode::Insert => "Insert",
+            InputMode::Normal => "Normal",
         }
     }
 
-    pub fn render(
+    pub fn render<W: Write>(
         &self,
-        frame: &mut Frame,
-        strokes_list: &Vec<String>,
-        char_index: &u16,
-        present_stroke: &u16,
-        cursor_visible: bool
-    ) {
-        // SPLIT SCREEN
-        let chunks_vertical = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([Constraint::Min(1), Constraint::Length(3)])
-            .split(frame.area());
-        let chunks_horizontal = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Length(3), Constraint::Min(1)])
-            .split(frame.area());
-
-        let mut lines = Vec::new();
-
-        for s in strokes_list {
-            lines.push(Line::raw(s.as_str()));
+        w: &mut W,
+        strokes_list: &[String],
+        char_index: u16,
+        present_stroke: u16,
+        cursor_visible: bool,
+    ) -> io::Result<()> {
+        let (width, height) = terminal::size()?;
+        if width < 4 || height < 5 {
+            return Ok(());
         }
 
-        let line_widget =
-            Paragraph::new(lines).block(Block::default().borders(Borders::ALL).title(" Editor "));
+        queue!(w, cursor::Hide, Clear(ClearType::All))?;
 
-        frame.render_widget(line_widget, chunks_vertical[0]); // Код — в chunks[0]
+        let title = " Editor ";
+        let top_border_len = (width as usize).saturating_sub(2 + title.len());
+        queue!(
+            w,
+            cursor::MoveTo(0, 0),
+            Print(format!("┌{}{}┐", title, "─".repeat(top_border_len)))
+        )?;
+
+        let inner_width = (width as usize).saturating_sub(0);
+        let inner_height = (height as usize).saturating_sub(0);
+
+        for row in 0..inner_height {
+            let screen_y = (row + 1) as u16;
+            let line_text = strokes_list.get(row).map(|s| s.as_str()).unwrap_or("");
+
+            let clipped: String = line_text.chars().take(inner_width).collect();
+
+            queue!(
+                w,
+                cursor::MoveTo(0, screen_y),
+                Print("│"),
+                Print(&clipped),
+                cursor::MoveTo(width - 1, screen_y),
+                Print("│")
+            )?;
+        }
+
+        let bottom_border_len = (width as usize).saturating_sub(2);
+        queue!(
+            w,
+            cursor::MoveTo(0, height - 1),
+            Print(format!("└{}┘", "─".repeat(bottom_border_len)))
+        )?;
+
         if cursor_visible {
-            frame.set_cursor_position(Position::new(
-                chunks_vertical[0].x + char_index + 1,
-                chunks_vertical[0].y + present_stroke + 1,
-            ));
+            queue!(
+                w,
+                cursor::MoveTo(char_index + 1, present_stroke + 1),
+                cursor::Show
+            )?;
         }
+
+        w.flush()
     }
 }
