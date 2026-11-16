@@ -42,15 +42,6 @@ impl App {
         self.manager.prelude();
 
         loop {
-            let new_ticks = self.manager.hz.update();
-            // Внутри loop в main.rs:
-
-            self.manager.tick();    
-
-            if new_ticks > 0 && self.manager.hz.total_ticks % 16 == 0 {
-                self.manager.render_ui(stdout);
-            }
-
             if event::poll(Duration::from_millis(1))? {
                 if let Event::Key(key_event) = event::read()? {
                     if key_event.kind == KeyEventKind::Press {
@@ -62,6 +53,7 @@ impl App {
                     }
                 }
             }
+            self.manager.tick_ui(stdout);    
         }
 
         Ok(())

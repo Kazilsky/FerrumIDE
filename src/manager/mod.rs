@@ -1,5 +1,6 @@
 use crossterm::event::KeyCode;
-use std::io::{self, Write};
+use std::any::Any;
+use std::io::{self, BufWriter, Stdout, Write};
 
 mod modules;
 
@@ -8,7 +9,7 @@ use modules::context::{Context, InputMode};
 use modules::ui::UI;
 use modules::cli::args;
 use crate::manager::modules::command::CommandRegistry;
-use crate::manager::modules::context::hertz::Hertz;
+use crate::manager::modules::module::hertz::Hertz;
 
 // Import func input
 use modules::input::{parse_editing_key, parse_normal_key, parse_all_key};
@@ -35,18 +36,12 @@ impl Manager {
             context: Context::new(),
             commands: CommandRegistry::new(),
             pm: PluginManager::new(), 
-            hz: Hertz::new(1000),
+            hz: Hertz::new(5),
         }
     }
 
     pub fn prelude(&mut self) {
         self.pm.load(autopair(), &mut self.commands);
-
-        // self.timers.set_interval(
-        //     "cursor_blink",
-        //     Duration::from_millis(500),
-        //     "cursor.visible",
-        // );
 
         // I need this for test, so don't be angry, let this stay here as a temporary stopgap
         self.context.file.set_dir(args::parse_path());
@@ -58,16 +53,14 @@ impl Manager {
         self.context.buffer.strokes_array.append(&mut self.context.file.strokes_present_files);
     }
 
-    pub fn tick(&mut self) {
+    pub fn tick_ui(&mut self, stdout: &mut BufWriter<Stdout>) -> bool { 
         let new_ticks = self.hz.update();
 
-        for i in 0..new_ticks {
-            let current_tick = self.hz.total_ticks - new_ticks + i + 1;
-
-            if current_tick % 500 == 0 {
-                self.commands.execute("cursor.visible", &mut self.context);
-            }
+        if new_ticks > 0 {
+            self.render_ui(stdout);
+            return true;
         }
+        false
     }
 
     // This is render.
@@ -125,8 +118,9 @@ impl Manager {
             true
         } else { 
             // WHAT THE, WHAT IS IT??
-            // I don't remember this, I need check it in future
-            true 
+            // I don't remember this, I need check it in future: true 
+            // I think it's need be false
+            false
         }
     }
 }

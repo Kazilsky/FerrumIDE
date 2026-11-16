@@ -2,7 +2,6 @@ pub mod buffer;
 pub mod cursor;
 pub mod file;
 pub mod input;
-pub mod hertz;
 
 use buffer::Buffer as IDEBuffer;
 use cursor::Cursor;
