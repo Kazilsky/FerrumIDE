@@ -1,6 +1,7 @@
 use crossterm::event::KeyCode;
 use std::any::Any;
 use std::io::{self, BufWriter, Stdout, Write};
+use tokio::sync::mpsc;
 
 mod modules;
 
@@ -8,8 +9,10 @@ mod modules;
 use modules::context::{Context, InputMode};
 use modules::ui::UI;
 use modules::cli::args;
-use crate::manager::modules::command::CommandRegistry;
-use crate::manager::modules::module::hertz::Hertz;
+
+use modules::command::CommandRegistry;
+use modules::module::hertz::Hertz;
+use modules::timer::{TimerEvent, Timer};
 
 // Import func input
 use modules::input::{parse_editing_key, parse_normal_key, parse_all_key};
@@ -26,37 +29,53 @@ pub struct Manager {
     pub context: Context,
     pub commands: CommandRegistry, 
     pub pm: PluginManager,  
-    pub hz: Hertz
+    pub hz: Hertz,
+
+    pub timer_tx: mpsc::UnboundedSender<TimerEvent>,
+    pub timer_rx: mpsc::UnboundedReceiver<TimerEvent>,
 }
 
 impl Manager {
     pub fn new() -> Self {
+        let (timer_tx, timer_rx) = mpsc::unbounded_channel();
+
         Self {
             ui: UI::new(),
             context: Context::new(),
             commands: CommandRegistry::new(),
             pm: PluginManager::new(), 
-            hz: Hertz::new(5),
+            hz: Hertz::new(30),
+
+            timer_tx, 
+            timer_rx
         }
+    }
+
+    pub fn start_timer(&self, name: &str, command: &str) {
+        let mut timer = Timer::new(name.to_string(), Some(command.to_string()));
+        timer.start_timer(self.timer_tx.clone());
     }
 
     pub fn prelude(&mut self) {
         self.pm.load(autopair(), &mut self.commands);
-
+        self.start_timer("cursor_blink", "cursor.right");
+        
         // I need this for test, so don't be angry, let this stay here as a temporary stopgap
         self.context.file.set_dir(args::parse_path());
         self.context.file.read_dir();
+        // read_file is also example for the future, not so necessary now, but it's okay for example
         self.context.file.read_file("Cargo.toml");
 
-        self.context.buffer.strokes_array.remove(0); // Because we already have one stroke, we need remove this one, because we import file.
         // INFO: I think I need think about remove a necessary remove(0) for import file, it's bad practice
+        self.context.buffer.strokes_array.remove(0); // Because we already have one stroke, we need remove this one, because we import file.
         self.context.buffer.strokes_array.append(&mut self.context.file.strokes_present_files);
     }
 
+    // Since this involves rendering and frame processing, it will remain in the manager regardless.
+    // A downside is that it’s an architectural kludge.
+    // There are few advantages, but some do exist; it also serves as a clear example for me to keep in mind for the future.
     pub fn tick_ui(&mut self, stdout: &mut BufWriter<Stdout>) -> bool { 
-        let new_ticks = self.hz.update();
-
-        if new_ticks > 0 {
+        if self.hz.update() {
             self.render_ui(stdout);
             return true;
         }

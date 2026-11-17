@@ -8,4 +8,4 @@ color-eyre = "0.6.5"
 crossterm = "0.29.0"
 ignore = "0.4.34"
 ropey = "1.6.1"
-tokio = { version = "1.54.1", features = ["time"] }
+tokio = { version = "1.54.1", features = ["full", "time"] }

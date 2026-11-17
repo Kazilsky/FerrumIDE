@@ -11,7 +11,8 @@ use std::time::Duration;
 mod manager;
 use manager::Manager;
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     color_eyre::install()?;
 
     terminal::enable_raw_mode()?;

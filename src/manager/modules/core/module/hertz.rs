@@ -57,7 +57,7 @@ impl Hertz {
         }
     }
 
-    pub fn update(&mut self) -> u64 {
+    pub fn update(&mut self) -> bool {
         let now = Instant::now();
         let delta = now.duration_since(self.last_update);
 
@@ -68,10 +68,15 @@ impl Hertz {
 
         while self.accumulator >= self.tick_duration {
             self.present_tick += 1;
-            new_ticks += 1;
-            self.accumulator -= self.tick_duration;
+            // I need create a local integer because I need to take NEW ticks
+            // I comment it's because my stupid brain not think about it early.
+            new_ticks += 1; 
+            self.accumulator -= self.tick_duration; 
         }
-        new_ticks
+        if new_ticks > 0 {
+            return true
+        }
+        false
     }  
 }
 
@@ -88,11 +93,11 @@ mod tests {
 
         // Спим 40 мс — тик еще точно не должен пройти
         thread::sleep(Duration::from_millis(40));
-        assert_eq!(timer.update(), 0);
+        assert_eq!(timer.update(), false);
 
         // Спим еще 75 мс (в сумме ~115 мс, с запасом перекрываем 100 мс)
         thread::sleep(Duration::from_millis(75));
-        assert_eq!(timer.update(), 1);
+        assert_eq!(timer.update(), true);
         assert_eq!(timer.present_tick, 1);
     }
 
@@ -106,12 +111,12 @@ mod tests {
 
         // Должно накопиться 3 тика (300 мс), и ~50 мс остаться в аккумуляторе
         let ticks = timer.update();
-        assert_eq!(ticks, 3);
+        assert_eq!(ticks, true);
         assert_eq!(timer.present_tick, 3);
 
         // Проверяем, что остаток не сгорел: спим еще ~65 мс (50 + 65 > 100 мс)
         thread::sleep(Duration::from_millis(65));
-        assert_eq!(timer.update(), 4);
+        assert_eq!(timer.update(), true);
         assert_eq!(timer.present_tick, 4);
     }
 

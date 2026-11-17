@@ -49,13 +49,12 @@ impl CommandRegistry {
         self.register("cursor.left", |ctx| ctx.cursor.move_left());
         self.register("cursor.right", |ctx| {
             let len = ctx.buffer.strokes_array[ctx.buffer.present_stroke].len();
+            // `move_right` takes the maximum string length as an argument to guard against invalid character indices; 
+            // This ensures that one cannot move further to the right than the string allows.
             ctx.cursor.move_right(len);
         });
         
         self.register("buffer.swap_up", |ctx| ctx.buffer.swap_current_stroke(Direction::Up));
         self.register("buffer.swap_down", |ctx| ctx.buffer.swap_current_stroke(Direction::Down));
-    
-        
-        // self.register("stroke.remov", |ctx| ctx.buffer.delete_char(ctx.cursor.character_index + 1));
     }
 }

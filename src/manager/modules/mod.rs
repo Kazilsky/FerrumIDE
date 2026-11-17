@@ -8,6 +8,7 @@ mod core;
 pub use core::context::{self, input};
 
 pub use core::events::command;
-pub use core::events;
+pub use core::events::timer;
+
 pub use core::module;
 
