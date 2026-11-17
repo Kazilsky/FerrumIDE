@@ -1,5 +1,3 @@
-use std::println;
-
 use crossterm::event::KeyCode;
 
 pub struct Buffer {

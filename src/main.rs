@@ -11,7 +11,8 @@ use std::time::Duration;
 mod manager;
 use manager::Manager;
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     color_eyre::install()?;
 
     terminal::enable_raw_mode()?;
@@ -42,7 +43,7 @@ impl App {
         self.manager.prelude();
 
         loop {
-            if event::poll(Duration::from_millis(1))? {
+            if event::poll(Duration::from_millis(16))? {
                 if let Event::Key(key_event) = event::read()? {
                     if key_event.kind == KeyEventKind::Press {
                         let keep_running = self.manager.handle_key(key_event.code);
@@ -53,7 +54,8 @@ impl App {
                     }
                 }
             }
-            self.manager.tick_ui(stdout);    
+            self.manager.process_timers();
+            self.manager.render_ui(stdout);    
         }
 
         Ok(())
