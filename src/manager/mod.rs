@@ -49,20 +49,15 @@ impl Manager {
         }
     }
 
-    pub fn start_timer(&self, name: &str, command: &str) {
-        let mut timer = Timer::new(name.to_string(), Some(command.to_string()));
-        // By default, start_timer creates a timer with a frequency of 1 Hz. 
-        // A note for my future, incompetent self: 
-        // Hz indicates how many actions occur per second! 
-        // 1 Hz means one `println` per second; 2 Hz means two `println`s per second.
-
-        // In future I add Hz set for future features :)
-        timer.start_timer(self.timer_tx.clone());
-    }
-
     pub fn prelude(&mut self) {
         self.pm.load(autopair(), &mut self.commands);
-        self.start_timer("cursor_blink", "cursor.visible");
+
+        Timer::created_simple_timer(
+            "cursor_blink".to_string(),
+            Some("cursor.visible".to_string()), 
+            Some(2), 
+            self.timer_tx.clone()
+        );
         
         // I need this for test, so don't be angry, let this stay here as a temporary stopgap
         self.context.file.set_dir(args::parse_path());
@@ -94,6 +89,7 @@ impl Manager {
             &self.context.buffer.strokes_array,
             self.context.cursor.character_index as u16,
             self.context.buffer.present_stroke as u16,
+            &self.context.input_mode,
             self.context.cursor.visible,
         )
     }

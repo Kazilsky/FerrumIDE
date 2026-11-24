@@ -1,4 +1,5 @@
 use std::time::{Duration, Instant};
+use std::todo;
 use tokio::time;
 use tokio::sync::mpsc;
 use crate::manager::Hertz;
@@ -16,10 +17,18 @@ pub struct Timer {
 }
 
 impl Timer {
-    pub fn new(name: String, command: Option<String>) -> Self {
+    pub fn new(name: String, command: Option<String>, hz: Option<u32>) -> Self {
+        let mut format_hz = 0; 
+
+        if let Some(hz) = hz {
+            format_hz = hz
+        } else {
+            format_hz = 1
+        }
+        
         Self {
             name, 
-            hz: Some(Hertz::new(1)),
+            hz: Some(Hertz::new(format_hz)),
             command: command,
             started: false
         }
@@ -54,5 +63,18 @@ impl Timer {
                 }
             });
         }
+    }
+
+    pub fn created_simple_timer(name: String, command: Option<String>, hz: Option<u32>, tx: mpsc::UnboundedSender<TimerEvent>) -> Self { 
+        // By default, start_timer creates a timer with a frequency of 1 Hz. 
+        // A note for my future, incompetent self: 
+        // Hz indicates how many actions occur per second! 
+        // 1 Hz means one `println` per second; 2 Hz means two `println`s per second.
+
+        // In future I add Hz set for future features :)
+        
+        let mut timer = Self::new(name, command, hz);
+        timer.start_timer(tx);
+        timer
     }
 }
