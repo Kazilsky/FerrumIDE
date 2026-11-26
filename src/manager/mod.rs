@@ -12,7 +12,7 @@ use modules::cli::args;
 
 use modules::command::CommandRegistry;
 use modules::module::hertz::Hertz;
-use modules::timer::{TimerEvent, Timer};
+use modules::timer::{TimerEvent, Timer, TimerAction};
 
 // Import func input
 use modules::input::{parse_editing_key, parse_normal_key, parse_all_key};
@@ -29,6 +29,7 @@ pub struct Manager {
     pub context: Context,
     pub commands: CommandRegistry, 
     pub pm: PluginManager,  
+    pub frame: BufWriter<Stdout>,
 
     pub timer_tx: mpsc::UnboundedSender<TimerEvent>,
     pub timer_rx: mpsc::UnboundedReceiver<TimerEvent>,
@@ -42,7 +43,8 @@ impl Manager {
             ui: UI::new(),
             context: Context::new(),
             commands: CommandRegistry::new(),
-            pm: PluginManager::new(), 
+            pm: PluginManager::new(),
+            frame: BufWriter::new(io::stdout()),
 
             timer_tx, 
             timer_rx
@@ -54,8 +56,17 @@ impl Manager {
 
         Timer::created_simple_timer(
             "cursor_blink".to_string(),
+            Some(TimerAction::Command),
             Some("cursor.visible".to_string()), 
             Some(2), 
+            self.timer_tx.clone()
+        );
+
+        Timer::created_simple_timer(
+            "render_ui".to_string(),
+            Some(TimerAction::Return),
+            Some("render_ui".to_string()),
+            Some(16),
             self.timer_tx.clone()
         );
         
@@ -83,9 +94,9 @@ impl Manager {
 
     // This is render.
     // I don't good in render so just stay it's there
-    pub fn render_ui<W: Write>(&self, w: &mut W) -> io::Result<()> {
+    pub fn render_ui(&mut self) -> io::Result<()> {
         self.ui.render(
-            w,
+            &mut self.frame,
             &self.context.buffer.strokes_array,
             self.context.cursor.character_index as u16,
             self.context.buffer.present_stroke as u16,
@@ -94,9 +105,24 @@ impl Manager {
         )
     }
 
-    pub fn process_timers(&mut self) {
+    pub fn process_command_timers(&mut self) {
         while let Ok(ev) = self.timer_rx.try_recv() {
-            self.commands.execute(&ev.command, &mut self.context);
+            if let Some(action) = &ev.action_type {
+                match action {
+                    TimerAction::Command => self.commands.execute(&ev.command, &mut self.context),
+                    TimerAction::Return => {
+                        self.analyze_return_timer(&ev.command)
+                    }
+                }
+            }
+        }
+    }
+
+    fn analyze_return_timer(&mut self, event_command: &str) {
+        if event_command == "render_ui" {
+            if let Err(e) = self.render_ui() {
+                eprintln!("render error: {e}");
+            }
         }
     }
 

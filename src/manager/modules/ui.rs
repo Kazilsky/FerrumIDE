@@ -1,3 +1,6 @@
+//THIS FILE IS NEIROSLOP, IT'S ONLY FOR CREATE A STARTED GUI! In future I replace this one on my code, I bad in TUI/GUI 
+
+
 use crossterm::{
     cursor::{self, SetCursorStyle},
     queue,
@@ -160,14 +163,12 @@ impl<'a> EditorView<'a> {
                 queue!(
                     w,
                     SetForegroundColor(num_color),
-                    Print(format!("{:>3}  ", row + 1)) // Выравнивание по правому краю
+                    Print(format!("{:>3}  ", row + 1)) 
                 )?;
             } else {
-                // Пустые строки за пределами текста (как в Vim)
                 queue!(w, SetForegroundColor(self.theme.fg_gutter), Print("  ~  "))?;
             }
 
-            // 2. Рисуем сам текст
             let line_text = self.lines.get(row).map(|s| s.as_str()).unwrap_or("");
             let clipped: String = line_text.chars().take(text_width).collect();
             let padding = " ".repeat(text_width.saturating_sub(clipped.chars().count()));
@@ -176,35 +177,29 @@ impl<'a> EditorView<'a> {
                 w,
                 SetForegroundColor(self.theme.fg),
                 Print(clipped),
-                Print(padding) // Заливаем фон до конца строки
+                Print(padding)  
             )?;
         }
 
-        // Возвращаем координаты, где начинается именно ТЕКСТ (с учетом отступа под номера)
         Ok((area.x + gutter_width as u16, area.y))
     }
 }
 
-// ==========================================
-// 4. СБОРКА ИНТЕРФЕЙСА
-// ==========================================
-
 pub struct UI {
     pub theme: Theme,
-    pub show_command_palette: bool, // Включи true, чтобы увидеть всплывающее окно!
-}
+    pub show_command_palette: bool, }
 
 impl UI {
     pub fn new() -> Self {
         Self {
             theme: Theme::tokyo_night(),
-            show_command_palette: false, // Попробуй поменять на true!
+            show_command_palette: false,  
         }
     }
 
     pub fn render<W: Write>(
         &self,
-        w: &mut W,
+        w: &mut W,                
         strokes_list: &[String],
         char_index: u16,
         present_stroke: u16,
@@ -219,12 +214,8 @@ impl UI {
         queue!(w, cursor::Hide)?;
 
         let full_screen = Rect::new(0, 0, width, height);
-        
-        // В Helix нет рамок вокруг всего экрана! Это дает больше воздуха.
-        // Просто делим экран на рабочую зону и статус-бар (1 строка снизу).
         let (main_area, status_area) = full_screen.split_bottom(1);
 
-        // --- РИСУЕМ РЕДАКТОР НА ВЕСЬ ЭКРАН ---
         let editor = EditorView {
             lines: strokes_list,
             active_row: present_stroke,
@@ -232,20 +223,17 @@ impl UI {
         };
         let (text_start_x, text_start_y) = editor.render(w, main_area)?;
 
-        // --- РИСУЕМ СТАТУС-БАР (В стиле Nvim/Helix) ---
         self.render_status_bar(w, status_area, mode, char_index, present_stroke, strokes_list.len())?;
 
-        // --- ПЛАВАЮЩЕЕ ОКНО (Если активно) ---
-        // Например, нажмешь пробел в Normal моде и откроется такое меню поверх текста
         if self.show_command_palette {
             let popup_area = main_area.centered(40, 8);
             let inner_popup = Block {
                 title: " 🔍 Поиск файла ",
                 theme: &self.theme,
                 bg_color: self.theme.bg_dark,
-            }.render(w, popup_area)?;
+            }
+            .render(w, popup_area)?;
 
-            // Заполняем внутренность попапа
             for row in 0..inner_popup.height {
                 let text = match row {
                     0 => " > src/main.rs",
@@ -265,21 +253,15 @@ impl UI {
             }
         }
 
-        // --- УМНЫЙ КУРСОР ---
         if cursor_visible && !self.show_command_palette {
-            // Меняем форму курсора в зависимости от режима!
             let cursor_style = match mode {
-                InputMode::Normal => SetCursorStyle::SteadyBlock, // Кубик █
-                InputMode::Insert => SetCursorStyle::SteadyBar,   // Черточка |
+                InputMode::Normal => SetCursorStyle::SteadyBlock,
+                InputMode::Insert => SetCursorStyle::SteadyBar,
             };
-
-            let cursor_x = text_start_x + char_index;
-            let cursor_y = text_start_y + present_stroke;
-            
             queue!(
                 w,
                 cursor_style,
-                cursor::MoveTo(cursor_x, cursor_y),
+                cursor::MoveTo(text_start_x + char_index, text_start_y + present_stroke),
                 cursor::Show
             )?;
         }

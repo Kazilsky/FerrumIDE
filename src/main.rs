@@ -5,7 +5,7 @@ use crossterm::{
     execute,
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use std::io::{self, BufWriter, Stdout};
+use std::io;
 use std::time::Duration;
 
 mod manager;
@@ -14,15 +14,15 @@ use manager::Manager;
 #[tokio::main]
 async fn main() -> Result<()> {
     color_eyre::install()?;
-
     terminal::enable_raw_mode()?;
-    let mut stdout = BufWriter::new(io::stdout());
-    execute!(stdout, EnterAlternateScreen, cursor::Hide)?;
+
+    let mut out = io::stdout();  
+    execute!(out, EnterAlternateScreen, cursor::Hide)?;
 
     let mut app = App::new();
-    let res = app.run(&mut stdout);
+    let res = app.run();
 
-    execute!(stdout, cursor::Show, LeaveAlternateScreen)?;
+    execute!(out, cursor::Show, LeaveAlternateScreen)?;
     terminal::disable_raw_mode()?;
 
     res
@@ -39,7 +39,7 @@ impl App {
         }
     }
 
-    fn run(&mut self, stdout: &mut BufWriter<Stdout>) -> Result<()> {
+    fn run(&mut self) -> Result<()> {
         self.manager.prelude();
 
         loop {
@@ -47,17 +47,14 @@ impl App {
                 if let Event::Key(key_event) = event::read()? {
                     if key_event.kind == KeyEventKind::Press {
                         let keep_running = self.manager.handle_key(key_event.code);
-
                         if !keep_running {
                             break;
                         }
                     }
                 }
             }
-            self.manager.process_timers();
-            self.manager.render_ui(stdout);    
+            self.manager.process_command_timers();
         }
-
         Ok(())
     }
 }
